@@ -18,12 +18,15 @@ static void _feed()
 
 static void _printBraille(unsigned char ch)
 {
-  Serial.println(ch);
+  //Serial.println(ch);
+  //pass
 }
 
 void setup(void)
 {
   pinMode(PIN_LED, OUTPUT);
+  digitalWrite(PIN_LED, HIGH);
+
   feedStepper.setSpeed(60);
 
   Serial.begin(9600);
@@ -32,13 +35,6 @@ void setup(void)
 
 void loop(void)
 {
-  digitalWrite(PIN_LED, HIGH);
-  delay(100);
-  _feed();
-  digitalWrite(PIN_LED, LOW);
-  delay(100);
-
-
   // Protocol begin with "####"
   if (Serial.available() > 4 &&
       Serial.read() == '#' && Serial.read() == '#' &&
@@ -48,8 +44,8 @@ void loop(void)
     for (int i = 0; i < pktSize; i++) {
       _printBraille(Serial.read());
     }
-    Serial.println("OK")
+    Serial.println("OK");
   }
 }
 
-  /* vim: set sw=2 et: */
+/* vim: set sw=2 et: */
