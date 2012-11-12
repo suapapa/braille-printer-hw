@@ -20,23 +20,24 @@
 #define PIN_LED 13
 
 // pins for LCD
-#define PIN_LCD_RS 12
-#define PIN_LCD_EN 11
-#define PIN_LCD_D4 10
-#define PIN_LCD_D5 9
-#define PIN_LCD_D6 8
-#define PIN_LCD_D7 7
+#define PIN_LCD_RS 14
+#define PIN_LCD_EN 15
+#define PIN_LCD_D4 16
+#define PIN_LCD_D5 17
+#define PIN_LCD_D6 18
+#define PIN_LCD_D7 19
+#define PIN_LCD_BL 11
 
 // pins for stepper
-#define PIN_STP_1 14
-#define PIN_STP_2 15
-#define PIN_STP_3 16
-#define PIN_STP_4 17
+#define PIN_STP_1 2
+#define PIN_STP_2 3
+#define PIN_STP_3 4
+#define PIN_STP_4 5
 
 // pins for servos
 #define PIN_SRV_1 6
-#define PIN_SRV_2 5
-#define PIN_SRV_3 4
+#define PIN_SRV_2 7
+#define PIN_SRV_3 8
 
 /*---------------------------------------------------------------------------*/
 
@@ -56,11 +57,15 @@ void _displayBraille(int n, int t, unsigned char ch)
   lcd.print(']');
   lcd.print("PRTing...");
 
-  lcd.setCursor(1, 0);
+  lcd.setCursor(0, 1);
+  bool first = true;
   for (int i = 0; i < 8; i++) {
     if ((ch >> i) & 1) {
+      if (first)
+        first = false;
+      else
+        lcd.print('-');
       lcd.print(i + 1);
-      lcd.print('-');
     }
   }
 }
@@ -69,9 +74,11 @@ static void _initLCD(void)
 {
   lcd.begin(16, 2);
   lcd.clear();
-  lcd.setCursor(1, 0);
-  lcd.print("Hello ");
-  lcd.print("World");
+  lcd.setCursor(0, 0);
+  lcd.print("Braille Label");
+  lcd.setCursor(0, 1);
+  lcd.print("Printer");
+  analogWrite(PIN_LCD_BL, 120);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -115,9 +122,11 @@ static void _punch(int idx)
 
   switch(idx) {
     case 1: case 2: case 3:
+    digitalWrite(PIN_LED, HIGH);
       servo = &servoPunch[idx - 1];
       servo->write(press[idx - 1]);
       delay(msecs);
+    digitalWrite(PIN_LED, LOW);
       servo->write(release[idx - 1]);
       while(servo->read() != release[idx - 1]) {
         delay(10);
@@ -165,7 +174,6 @@ static void _punchBraille(unsigned char ch)
 void setup(void)
 {
   Serial.begin(9600);
-  Serial.println("Hello");
 
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH);
@@ -178,14 +186,15 @@ void setup(void)
 
 void loop(void)
 {
-  lcd.clear();
   digitalWrite(PIN_LED, LOW);
   // Protocol begin with "####"
   if (Serial.available() > 4 &&
       Serial.read() == '#' && Serial.read() == '#' &&
       Serial.read() == '#' && Serial.read() == '#') {
-    digitalWrite(PIN_LED, HIGH);
     unsigned char strSize = Serial.read();
+    lcd.clear();
+    analogWrite(PIN_LCD_BL, 128);
+    lcd.setCursor(0,0);
     lcd.print("RCVing ");
     lcd.print(strSize);
     lcd.print(" chars...");
@@ -197,6 +206,10 @@ void loop(void)
     }
     Serial.print("OK");
   }
+  analogWrite(PIN_LCD_BL, 0);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Wating...");
   delay(10);
 }
 
