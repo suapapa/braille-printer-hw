@@ -29,15 +29,15 @@
 #define PIN_LCD_BL 11
 
 // pins for stepper
-#define PIN_STP_1 2
-#define PIN_STP_2 3
-#define PIN_STP_3 4
-#define PIN_STP_4 5
+#define PIN_STP_1 6
+#define PIN_STP_2 7
+#define PIN_STP_3 8
+#define PIN_STP_4 9
 
 // pins for servos
-#define PIN_SRV_1 6
-#define PIN_SRV_2 7
-#define PIN_SRV_3 8
+#define PIN_SRV_1 2
+#define PIN_SRV_2 4
+#define PIN_SRV_3 5
 
 /*---------------------------------------------------------------------------*/
 
@@ -55,11 +55,9 @@ void _displayBraille(int n, int t, unsigned char ch)
   lcd.print('/');
   lcd.print(t);
   lcd.print(']');
-  lcd.print("PRTing...");
 
-  lcd.setCursor(0, 1);
   bool first = true;
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 6; i++) {
     if ((ch >> i) & 1) {
       if (first)
         first = false;
@@ -85,7 +83,7 @@ static void _initLCD(void)
 
 #include <Stepper.h>
 
-Stepper stepperFeed(200, PIN_STP_1, PIN_STP_2, PIN_STP_3, PIN_STP_4);
+Stepper stepperFeed(200, PIN_STP_3, PIN_STP_4, PIN_STP_2, PIN_STP_1);
 
 static void _turnOffStepper(void)
 {
@@ -116,21 +114,29 @@ Servo servoPunch[3];
 static void _punch(int idx)
 {
   Servo *servo;
-  int press[3] = {90, 90, 90};
+  int press[3] = {180, 180, 180};
   int release[3] = {0, 0, 0};
-  int msecs = 500;
+  int msecs = 2000;
 
   switch(idx) {
     case 1: case 2: case 3:
-    digitalWrite(PIN_LED, HIGH);
+      lcd.setCursor(0, 1);
+      lcd.print("puncing ");
+      lcd.print(idx);
+      lcd.print("...");
+      digitalWrite(PIN_LED, HIGH);
       servo = &servoPunch[idx - 1];
       servo->write(press[idx - 1]);
       delay(msecs);
-    digitalWrite(PIN_LED, LOW);
+      /*while(servo->read() != press[idx - 1]) {*/
+      /*  delay(10);*/
+      /*}*/
+      digitalWrite(PIN_LED, LOW);
       servo->write(release[idx - 1]);
-      while(servo->read() != release[idx - 1]) {
-        delay(10);
-      }
+      delay(msecs);
+      /*while(servo->read() != release[idx - 1]) {*/
+      /*  delay(10);*/
+      /*}*/
       break;
     default:
       for (int i = 0; i < 3; i++) {
@@ -152,21 +158,22 @@ static void _initPunchs(void)
 
 static void _punchBraille(unsigned char ch)
 {
-  if ((ch >> 1) & 1)
-    _punch(1);
-  if ((ch >> 2) & 1)
-    _punch(2);
-  if ((ch >> 3) & 1)
-    _punch(3);
-  _feed(1);
+  _feed(10);
 
-  if ((ch >> 4) & 1)
+  if ((ch >> 0) & 1)
     _punch(1);
-  if ((ch >> 5) & 1)
+  if ((ch >> 1) & 1)
     _punch(2);
-  if ((ch >> 6) & 1)
+  if ((ch >> 2) & 1)
     _punch(3);
-  _feed(1);
+  _feed(5);
+
+  if ((ch >> 3) & 1)
+    _punch(1);
+  if ((ch >> 4) & 1)
+    _punch(2);
+  if ((ch >> 5) & 1)
+    _punch(3);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -181,6 +188,7 @@ void setup(void)
   _initLCD();
   _initPunchs();
   _initStepper();
+  _feed(300);
   _punch(0);
 }
 
