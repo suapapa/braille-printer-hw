@@ -48,7 +48,8 @@ static void _initLCD(void)
   lcd.begin(16, 2);
   lcd.clear();
   lcd.setCursor(1, 0);
-  lcd.print("HelloWorld");
+  lcd.print("Hello ");
+  lcd.print("World");
 }
 
 #include <Stepper.h>
@@ -113,10 +114,43 @@ static void _punch(int idx)
   }
 }
 
-static void _printBraille(unsigned char ch)
+void _displayBraille(int n, int t, unsigned char ch)
 {
-  //Serial.println(ch);
-  //pass
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print('[');
+  lcd.print(n);
+  lcd.print('/');
+  lcd.print(t);
+  lcd.print(']');
+  lcd.print("PRTing...");
+
+  lcd.setCursor(1, 0);
+  for (int i = 0; i < 8; i++) {
+    if ((ch >> i) & 1) {
+      lcd.print(i + 1);
+      lcd.print('-');
+    }
+  }
+}
+
+static void _punchBraille(unsigned char ch)
+{
+  if ((ch >> 1) & 1)
+    _punch(1);
+  if ((ch >> 2) & 1)
+    _punch(2);
+  if ((ch >> 3) & 1)
+    _punch(3);
+  _feed(1);
+
+  if ((ch >> 4) & 1)
+    _punch(1);
+  if ((ch >> 5) & 1)
+    _punch(2);
+  if ((ch >> 6) & 1)
+    _punch(3);
+  _feed(1);
 }
 
 void setup(void)
@@ -131,36 +165,28 @@ void setup(void)
   _initPunchs();
   _initStepper();
   _punch(0);
-
-  digitalWrite(PIN_LED, LOW);
 }
 
 static int loopCnt = 0;
 
 void loop(void)
 {
-  /*// Protocol begin with "####"*/
-  /*if (Serial.available() > 4 &&*/
-  /*    Serial.read() == '#' && Serial.read() == '#' &&*/
-  /*    Serial.read() == '#' && Serial.read() == '#') {*/
-  /*  unsigned char pktSize = Serial.read();*/
-  /*  delay(300); // in 9600bps 256 bytes will come in 210ms.*/
-  /*  for (int i = 0; i < pktSize; i++) {*/
-  /*    _printBraille(Serial.read());*/
-  /*  }*/
-  /*  Serial.println("OK");*/
-  /*}*/
-
-  digitalWrite(PIN_LED, HIGH);
-  loopCnt += 1;
-  if (loopCnt < 100) {
-    _feed(10);
-  }
-  delay(500);
-
   digitalWrite(PIN_LED, LOW);
-  delay(500);
-
+  // Protocol begin with "####"
+  if (Serial.available() > 4 &&
+      Serial.read() == '#' && Serial.read() == '#' &&
+      Serial.read() == '#' && Serial.read() == '#') {
+    digitalWrite(PIN_LED, HIGH);
+    unsigned char strSize = Serial.read();
+    delay(300); // in 9600bps 256 bytes will come in 210ms.
+    for (int i = 0; i < strSize; i++) {
+      unsigned char bch = Serial.read();
+      _displayBraille(i+1, strSize, bch);
+      _punchBraille(bch);
+    }
+    Serial.print("OK");
+  }
+  delay(10);
 }
 
 /* vim: set sw=2 et: */
