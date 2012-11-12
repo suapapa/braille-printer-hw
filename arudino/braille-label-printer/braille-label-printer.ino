@@ -80,13 +80,6 @@ static void _initStepper(void)
 
 Servo servoPunch[3];
 
-static void _initPunchs(void)
-{
-  servoPunch[0].attach(PIN_SRV_1);
-  servoPunch[1].attach(PIN_SRV_2);
-  servoPunch[2].attach(PIN_SRV_3);
-}
-
 static void _punch(int idx)
 {
   Servo *servo;
@@ -112,6 +105,14 @@ static void _punch(int idx)
       delay(1000);
       break;
   }
+}
+
+static void _initPunchs(void)
+{
+  servoPunch[0].attach(PIN_SRV_1);
+  servoPunch[1].attach(PIN_SRV_2);
+  servoPunch[2].attach(PIN_SRV_3);
+  _punch(0);
 }
 
 void _displayBraille(int n, int t, unsigned char ch)
