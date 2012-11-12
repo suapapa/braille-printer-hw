@@ -1,5 +1,31 @@
+/*
+  braille-label-printer.ino - Arduino sketch for Braille Label Printer
+  Copyright (c) 2012 Homin Lee <homin.lee@suapapa.net>. All right reserved.
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+*/
 
 #define PIN_LED 13
+
+// pins for LCD
+#define PIN_LCD_RS 12
+#define PIN_LCD_EN 11
+#define PIN_LCD_D4 10
+#define PIN_LCD_D5 9
+#define PIN_LCD_D6 8
+#define PIN_LCD_D7 7
 
 // pins for stepper
 #define PIN_STP_1 14
@@ -8,9 +34,22 @@
 #define PIN_STP_4 17
 
 // pins for servos
-#define PIN_SRV_1 9
-#define PIN_SRV_2 10
-#define PIN_SRV_3 11
+#define PIN_SRV_1 6
+#define PIN_SRV_2 5
+#define PIN_SRV_3 4
+
+#include <LiquidCrystal.h>
+
+LiquidCrystal lcd(PIN_LCD_RS, PIN_LCD_EN,
+    PIN_LCD_D4, PIN_LCD_D5, PIN_LCD_D6, PIN_LCD_D7);
+
+static void _initLCD(void)
+{
+  lcd.begin(16, 2);
+  lcd.clear();
+  lcd.setCursor(1, 0);
+  lcd.print("HelloWorld");
+}
 
 #include <Stepper.h>
 
@@ -30,11 +69,17 @@ static void _feed(int step)
   _turnOffStepper();
 }
 
+static void _initStepper(void)
+{
+  stepperFeed.setSpeed(30);
+  _turnOffStepper();
+}
+
 #include <Servo.h>
 
 Servo servoPunch[3];
 
-static void _punchSetup(void)
+static void _initPunchs(void)
 {
   servoPunch[0].attach(PIN_SRV_1);
   servoPunch[1].attach(PIN_SRV_2);
@@ -82,8 +127,9 @@ void setup(void)
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH);
 
-  stepperFeed.setSpeed(30);
-  _punchSetup();
+  _initLCD();
+  _initPunchs();
+  _initStepper();
   _punch(0);
 
   digitalWrite(PIN_LED, LOW);
