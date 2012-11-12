@@ -2,3 +2,7 @@
 *.s#?
 *.b#?
 *~
+arudino/braille-label-printer/.sconsign.dblite
+arudino/braille-label-printer/braille-label-printer.elf
+arudino/braille-label-printer/braille-label-printer.hex
+arudino/braille-label-printer/build/
