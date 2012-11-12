@@ -38,10 +38,32 @@
 #define PIN_SRV_2 5
 #define PIN_SRV_3 4
 
+/*---------------------------------------------------------------------------*/
+
 #include <LiquidCrystal.h>
 
 LiquidCrystal lcd(PIN_LCD_RS, PIN_LCD_EN,
     PIN_LCD_D4, PIN_LCD_D5, PIN_LCD_D6, PIN_LCD_D7);
+
+void _displayBraille(int n, int t, unsigned char ch)
+{
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print('[');
+  lcd.print(n);
+  lcd.print('/');
+  lcd.print(t);
+  lcd.print(']');
+  lcd.print("PRTing...");
+
+  lcd.setCursor(1, 0);
+  for (int i = 0; i < 8; i++) {
+    if ((ch >> i) & 1) {
+      lcd.print(i + 1);
+      lcd.print('-');
+    }
+  }
+}
 
 static void _initLCD(void)
 {
@@ -51,6 +73,8 @@ static void _initLCD(void)
   lcd.print("Hello ");
   lcd.print("World");
 }
+
+/*---------------------------------------------------------------------------*/
 
 #include <Stepper.h>
 
@@ -75,6 +99,8 @@ static void _initStepper(void)
   stepperFeed.setSpeed(30);
   _turnOffStepper();
 }
+
+/*---------------------------------------------------------------------------*/
 
 #include <Servo.h>
 
@@ -115,26 +141,6 @@ static void _initPunchs(void)
   _punch(0);
 }
 
-void _displayBraille(int n, int t, unsigned char ch)
-{
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print('[');
-  lcd.print(n);
-  lcd.print('/');
-  lcd.print(t);
-  lcd.print(']');
-  lcd.print("PRTing...");
-
-  lcd.setCursor(1, 0);
-  for (int i = 0; i < 8; i++) {
-    if ((ch >> i) & 1) {
-      lcd.print(i + 1);
-      lcd.print('-');
-    }
-  }
-}
-
 static void _punchBraille(unsigned char ch)
 {
   if ((ch >> 1) & 1)
@@ -154,6 +160,8 @@ static void _punchBraille(unsigned char ch)
   _feed(1);
 }
 
+/*---------------------------------------------------------------------------*/
+
 void setup(void)
 {
   Serial.begin(9600);
@@ -168,10 +176,9 @@ void setup(void)
   _punch(0);
 }
 
-static int loopCnt = 0;
-
 void loop(void)
 {
+  lcd.clear();
   digitalWrite(PIN_LED, LOW);
   // Protocol begin with "####"
   if (Serial.available() > 4 &&
@@ -179,7 +186,10 @@ void loop(void)
       Serial.read() == '#' && Serial.read() == '#') {
     digitalWrite(PIN_LED, HIGH);
     unsigned char strSize = Serial.read();
-    delay(300); // in 9600bps 256 bytes will come in 210ms.
+    lcd.print("RCVing ");
+    lcd.print(strSize);
+    lcd.print(" chars...");
+    delay(250); // in 9600bps 256 bytes will come in 210ms.
     for (int i = 0; i < strSize; i++) {
       unsigned char bch = Serial.read();
       _displayBraille(i+1, strSize, bch);
