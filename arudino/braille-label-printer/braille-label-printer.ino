@@ -56,7 +56,7 @@ void _displayBraille(int n, int t, unsigned char ch)
   lcd.print(n);
   lcd.print('/');
   lcd.print(t);
-  lcd.print('] ');
+  lcd.print("] ");
 
   for (int i = 0; i < 6; i++) {
     if ((ch >> i) & 1)
@@ -65,23 +65,29 @@ void _displayBraille(int n, int t, unsigned char ch)
 }
 
 static int lastBL = 0;
-static void _lcdBacklight(int v)
+static int _lcdBacklight(int v)
 {
   if (lastBL == v)
-    return;
+    return 0;
+
+  int delayed = 0;
 
   if (lastBL > v) {
     for (int i = lastBL; i != v; i--) {
       analogWrite(PIN_LCD_BL, i);
       delay(10);
+      delayed += 10;
     }
   } else {
     for (int i = lastBL; i != v; i++) {
       analogWrite(PIN_LCD_BL, i);
       delay(10);
+      delayed += 10;
     }
   }
   lastBL = v;
+
+  return delayed;
 }
 
 static void _initLCD(void)
@@ -261,7 +267,7 @@ void loop(void)
       _punchBraille(bch);
     }
 #endif
-    Serial.print("OK");
+    // Serial.print("OK");
   }
   lcd.clear();
   lcd.setCursor(0,0);
@@ -270,8 +276,9 @@ void loop(void)
 #else
   lcd.print("Wating...");
 #endif
-  _lcdBacklight(100);
-  delay(10);
+
+  if (0 == _lcdBacklight(100))
+    delay(10);
 }
 
 /* vim: set sw=2 et: */
