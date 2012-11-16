@@ -13,7 +13,6 @@ def sendString(ser, string):
 
 if __name__ == '__main__':
     ser = serial.Serial('/dev/ttyUSB0', 9600)
-    time.sleep(3)
 
     data = sys.argv[1].strip()
     print "Printing %s..."%data
