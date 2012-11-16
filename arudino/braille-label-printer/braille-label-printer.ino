@@ -35,9 +35,9 @@
 #define PIN_STP_4 9
 
 // pins for servos
-#define PIN_SRV_1 2
-#define PIN_SRV_2 4
-#define PIN_SRV_3 5
+#define PIN_SRV_1 5 //2
+#define PIN_SRV_2 2 //4
+#define PIN_SRV_3 4 //5
 
 /*---------------------------------------------------------------------------*/
 
@@ -114,8 +114,8 @@ Servo servoPunch[3];
 static void _punch(int idx)
 {
   Servo *servo;
-  int press[3] = {180, 180, 180};
-  int release[3] = {0, 0, 0};
+  int press[3] = {0, 0, 180};
+  int release[3] = {180, 180, 0};
   int msecs = 2000;
 
   switch(idx) {
