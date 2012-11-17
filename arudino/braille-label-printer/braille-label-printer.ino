@@ -17,7 +17,7 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-// #define FACTORY_TEST
+//#define FACTORY_TEST
 
 #define PIN_LED 13
 
@@ -31,15 +31,18 @@
 #define PIN_LCD_BL 11
 
 // pins for stepper
-#define PIN_STP_1 6
-#define PIN_STP_2 7
-#define PIN_STP_3 10
-#define PIN_STP_4 12
+#define PIN_STP_1 7
+#define PIN_STP_2 6
+#define PIN_STP_3 12
+#define PIN_STP_4 10
 
 // pins for servos
 #define PIN_SRV_1 5
 #define PIN_SRV_2 2
 #define PIN_SRV_3 4
+
+// pins for buzer
+#define PIN_BUZZER 14
 
 /*---------------------------------------------------------------------------*/
 
@@ -105,7 +108,7 @@ static void _initLCD(void)
 
 #include <Stepper.h>
 
-Stepper stepperFeed(200, PIN_STP_3, PIN_STP_4, PIN_STP_2, PIN_STP_1);
+Stepper stepperFeed(60, PIN_STP_3, PIN_STP_4, PIN_STP_2, PIN_STP_1);
 
 static void _turnOffStepper(void)
 {
@@ -117,13 +120,20 @@ static void _turnOffStepper(void)
 
 static void _feed(int step)
 {
-  stepperFeed.step(step);
+  //stepperFeed.step(-step);
+  lcd.setCursor(0, 1);
+  lcd.print("!! FEED !!      ");
+  for (int i = 0; i < step; i++){
+    _buzz(1500, 100);
+    delay(200);
+  }
+  delay(step * 1000);
   _turnOffStepper();
 }
 
 static void _initStepper(void)
 {
-  stepperFeed.setSpeed(30);
+  stepperFeed.setSpeed(100);
   _turnOffStepper();
 }
 
@@ -195,15 +205,13 @@ static void _initPunchs(void)
 
 static void _punchBraille(unsigned char ch)
 {
-  _feed(10);
-
   if ((ch >> 0) & 1)
     _pressAndRelease(1);
   if ((ch >> 1) & 1)
     _pressAndRelease(2);
   if ((ch >> 2) & 1)
     _pressAndRelease(3);
-  _feed(5);
+  _feed(1);
 
   if ((ch >> 3) & 1)
     _pressAndRelease(1);
@@ -211,8 +219,20 @@ static void _punchBraille(unsigned char ch)
     _pressAndRelease(2);
   if ((ch >> 5) & 1)
     _pressAndRelease(3);
+  _feed(1);
+  _feed(1);
 }
 
+void _buzz(long frequency, long length) {
+  long delayValue = 1000000/frequency/2; // calculate the delay value between transitions
+  long numCycles = frequency * length/ 1000; // calculate the number of cycles for proper timing
+  for (long i=0; i < numCycles; i++){ // for the calculated length of time...
+    digitalWrite(PIN_BUZZER, HIGH); // write the buzzer pin high to push out the diaphram
+    delayMicroseconds(delayValue); // wait for the calculated delay value
+    digitalWrite(PIN_BUZZER, LOW); // write the buzzer pin low to pull back the diaphram
+    delayMicroseconds(delayValue); // wait againf or the calculated delay value
+  }
+}
 /*---------------------------------------------------------------------------*/
 
 #define SERIAL_SPEED 9600
@@ -224,10 +244,14 @@ void setup(void)
   pinMode(PIN_LED, OUTPUT);
   digitalWrite(PIN_LED, HIGH);
 
+  pinMode(PIN_BUZZER, OUTPUT);
   _initLCD();
   _initPunchs();
   _initStepper();
-  _feed(300);
+  //_feed(300);
+  _buzz(1500, 100);
+  delay(100);
+  _buzz(2000, 100);
   _pressAndRelease(0);
 }
 
@@ -252,7 +276,7 @@ void loop(void)
         _release(Serial.read() - '0');
         break;
       case 'F':
-        _feed(100);
+        _feed((Serial.read() - '0')*3);
         break;
     }
 #else
@@ -261,14 +285,21 @@ void loop(void)
     lcd.print(" chars...");
     _lcdBacklight(200);
     delay(strSize * 1000 / (SERIAL_SPEED / 8) + 10);
+    _buzz(1000, 100);
+    delay(100);
+    _buzz(1500, 100);
     for (int i = 0; i < strSize; i++) {
       unsigned char bch = Serial.read();
       _displayBraille(i+1, strSize, bch);
       _punchBraille(bch);
     }
+    _buzz(2000, 100);
+    delay(100);
+    _buzz(1500, 100);
 #endif
     // Serial.print("OK");
   }
+  _turnOffStepper();
   lcd.clear();
   lcd.setCursor(0,0);
 #ifdef FACTORY_TEST
