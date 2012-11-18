@@ -175,6 +175,10 @@ static void _release(int idx)
 
 static void _pressAndRelease(int idx)
 {
+  if (idx == 1)
+    idx = 3;
+  else if (idx == 3)
+    idx = 1;
   switch(idx) {
     case 1: case 2: case 3:
       lcd.setCursor(0, 1);
@@ -182,8 +186,8 @@ static void _pressAndRelease(int idx)
       lcd.print(idx);
       lcd.print("...");
 
-      _press(idx); delay(2 * SECS);
-      _release(idx); delay(0.5 * SECS);
+      _press(idx); delay(0.8 * SECS);
+      _release(idx); delay(0.2 * SECS);
       break;
 
     default:
@@ -205,22 +209,21 @@ static void _initPunchs(void)
 
 static void _punchBraille(unsigned char ch)
 {
+  _feed(1);
   if ((ch >> 0) & 1)
     _pressAndRelease(1);
   if ((ch >> 1) & 1)
     _pressAndRelease(2);
   if ((ch >> 2) & 1)
     _pressAndRelease(3);
-  _feed(1);
 
+  _feed(1);
   if ((ch >> 3) & 1)
     _pressAndRelease(1);
   if ((ch >> 4) & 1)
     _pressAndRelease(2);
   if ((ch >> 5) & 1)
     _pressAndRelease(3);
-  _feed(1);
-  _feed(1);
 }
 
 void _buzz(long frequency, long length) {
